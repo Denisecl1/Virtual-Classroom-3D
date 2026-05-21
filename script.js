@@ -6,9 +6,9 @@ import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/js
 // CONTENEDOR
 const contenedor = document.getElementById("contenedor3D");
 
-// ESCENA
+// ESCENA (Con el nuevo color de cielo)
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x202020);
+scene.background = new THREE.Color(0x87CEEB);
 
 // CAMARA
 const camera = new THREE.PerspectiveCamera(
@@ -17,19 +17,19 @@ const camera = new THREE.PerspectiveCamera(
     0.1,
     1000
 );
-// Puedes ajustar el '2' para ser más alto o bajito dentro del salón
 camera.position.set(0, 2, 8); 
 
-// RENDER
+// RENDER (Ahora con soporte para sombras)
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(contenedor.clientWidth, contenedor.clientHeight);
 renderer.xr.enabled = true; 
+renderer.shadowMap.enabled = true; // Activar sombras en el motor
 contenedor.appendChild(renderer.domElement);
 
 // BOTÓN VR
 document.body.appendChild(VRButton.createButton(renderer));
 
-// --- NUEVOS CONTROLES (PRIMERA PERSONA) ---
+// --- CONTROLES (PRIMERA PERSONA) ---
 const controls = new PointerLockControls(camera, document.body);
 
 // Variables físicas para el movimiento
@@ -41,30 +41,27 @@ let prevTime = performance.now();
 const velocity = new THREE.Vector3();
 const direction = new THREE.Vector3();
 
-// Eventos del recuadro de instrucciones (MODIFICADO)
+// Eventos del recuadro de instrucciones
 const instrucciones = document.getElementById('instrucciones');
-const clickPrompter = document.getElementById('click-prompter'); // El botón de "Click aquí"
+const clickPrompter = document.getElementById('click-prompter');
 
 if (instrucciones && clickPrompter) {
-    // 1. Escuchamos el click específicamente en el botón
     clickPrompter.addEventListener('click', function () {
-        controls.lock(); // Esto oculta el mouse y activa la cámara
+        controls.lock(); 
     });
     
-    // 2. Al entrar al modo cámara
     controls.addEventListener('lock', function () {
-        instrucciones.style.pointerEvents = 'none'; // Permite "mirar a través" del cuadro
-        clickPrompter.style.display = 'none';       // Ocultamos solo el botón
+        instrucciones.style.pointerEvents = 'none'; 
+        clickPrompter.style.display = 'none';       
     });
     
-    // 3. Al salir del modo cámara (Presionar ESC)
     controls.addEventListener('unlock', function () {
-        instrucciones.style.pointerEvents = 'auto'; // El cuadro vuelve a detectar clicks
-        clickPrompter.style.display = 'block';      // Mostramos el botón de nuevo
+        instrucciones.style.pointerEvents = 'auto'; 
+        clickPrompter.style.display = 'block';      
     });
 }
 
-// Detectar cuando se presiona una tecla
+// Detectar teclas
 const onKeyDown = function (event) {
     switch (event.code) {
         case 'ArrowUp':
@@ -78,7 +75,6 @@ const onKeyDown = function (event) {
     }
 };
 
-// Detectar cuando se suelta una tecla
 const onKeyUp = function (event) {
     switch (event.code) {
         case 'ArrowUp':
@@ -92,18 +88,30 @@ const onKeyUp = function (event) {
     }
 };
 
-// Activar los detectores de teclado en la ventana
 document.addEventListener('keydown', onKeyDown);
 document.addEventListener('keyup', onKeyUp);
 // ------------------------------------------
 
-// LUCES
-const ambient = new THREE.AmbientLight(0xffffff, 2);
-scene.add(ambient);
+// --- LUCES MEJORADAS ---
+// 1. Luz de Hemisferio (Cielo blanco, Suelo gris oscuro)
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
+hemiLight.position.set(0, 20, 0);
+scene.add(hemiLight);
 
-const directional = new THREE.DirectionalLight(0xffffff, 3);
-directional.position.set(5, 10, 7);
-scene.add(directional);
+// 2. Luz Direccional (Sol) con sombras
+const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+dirLight.position.set(-5, 10, 5);
+dirLight.castShadow = true; // El sol proyecta sombras
+
+// Configuración de calidad de sombra
+dirLight.shadow.mapSize.width = 2048;
+dirLight.shadow.mapSize.height = 2048;
+dirLight.shadow.camera.left = -10;
+dirLight.shadow.camera.right = 10;
+dirLight.shadow.camera.top = 10;
+dirLight.shadow.camera.bottom = -10;
+scene.add(dirLight);
+// ------------------------------------------
 
 // GRID
 const grid = new THREE.GridHelper(20, 20);
@@ -117,8 +125,18 @@ loader.load(
         const modelo = gltf.scene;
         
         modelo.scale.set(.90, .90, .90);
-        
         modelo.position.set(0, 0, 0);
+
+        // --- TRUCO PARA SOMBRAS EN SKETCHUP ---
+        // Le decimos a cada parte del modelo que genere y reciba sombras
+        modelo.traverse(function (node) {
+            if (node.isMesh) {
+                node.castShadow = true;
+                node.receiveShadow = true;
+            }
+        });
+        // --------------------------------------
+
         scene.add(modelo);
         console.log("MODELO CARGADO CON ÉXITO");
     },
@@ -139,20 +157,16 @@ window.addEventListener('resize', () => {
 renderer.setAnimationLoop(function () {
     const time = performance.now();
 
-    // Solo nos movemos si el usuario está dentro del modo cámara
     if (controls.isLocked === true) {
         const delta = (time - prevTime) / 1000;
 
-        // Fricción
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
 
-        // Dirección calculada según las teclas presionadas
         direction.z = Number(moveForward) - Number(moveBackward);
         direction.x = Number(moveRight) - Number(moveLeft);
         direction.normalize(); 
 
-        // Aplicar velocidad
         if (moveForward || moveBackward) velocity.z -= direction.z * 40.0 * delta;
         if (moveLeft || moveRight) velocity.x -= direction.x * 40.0 * delta;
 
