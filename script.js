@@ -1,5 +1,4 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
-// 1. CAMBIO: Importamos PointerLockControls en lugar de OrbitControls
 import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/PointerLockControls.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/webxr/VRButton.js';
@@ -42,17 +41,26 @@ let prevTime = performance.now();
 const velocity = new THREE.Vector3();
 const direction = new THREE.Vector3();
 
-// Eventos del recuadro de instrucciones
+// Eventos del recuadro de instrucciones (MODIFICADO)
 const instrucciones = document.getElementById('instrucciones');
-if (instrucciones) {
-    instrucciones.addEventListener('click', function () {
+const clickPrompter = document.getElementById('click-prompter'); // El botón de "Click aquí"
+
+if (instrucciones && clickPrompter) {
+    // 1. Escuchamos el click específicamente en el botón
+    clickPrompter.addEventListener('click', function () {
         controls.lock(); // Esto oculta el mouse y activa la cámara
     });
+    
+    // 2. Al entrar al modo cámara
     controls.addEventListener('lock', function () {
-        instrucciones.style.display = 'none'; // Ocultar cuadro
+        instrucciones.style.pointerEvents = 'none'; // Permite "mirar a través" del cuadro
+        clickPrompter.style.display = 'none';       // Ocultamos solo el botón
     });
+    
+    // 3. Al salir del modo cámara (Presionar ESC)
     controls.addEventListener('unlock', function () {
-        instrucciones.style.display = 'block'; // Mostrar cuadro al dar ESC
+        instrucciones.style.pointerEvents = 'auto'; // El cuadro vuelve a detectar clicks
+        clickPrompter.style.display = 'block';      // Mostramos el botón de nuevo
     });
 }
 
@@ -131,7 +139,7 @@ window.addEventListener('resize', () => {
 renderer.setAnimationLoop(function () {
     const time = performance.now();
 
-    // Solo nos movemos si el usuario hizo click en el recuadro
+    // Solo nos movemos si el usuario está dentro del modo cámara
     if (controls.isLocked === true) {
         const delta = (time - prevTime) / 1000;
 

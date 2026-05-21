@@ -27,17 +27,23 @@
 
     <!-- Contenedor -->
     <div id="contenedor3D" class="position-relative">
+    
+    <div id="instrucciones" class="position-absolute top-0 start-0 m-3 p-3 bg-dark text-white rounded bg-opacity-75" style="z-index: 10; width: 250px; pointer-events: auto;">
+        <h5 class="text-center text-info mb-3">Controles del Aula</h5>
         
-        <div id="instrucciones" class="position-absolute top-0 start-0 m-3 p-3 bg-dark text-white rounded bg-opacity-75" style="z-index: 10; cursor: pointer;">
-            <h5 class="text-center text-info">Controles del Aula</h5>
+        <div id="controles-fijos">
+            <p class="mb-2"><span class="me-2">⌨️</span> <b>W, A, S, D</b> para caminar</p>
+            <p class="mb-2"><span class="me-2">🖱️</span> <b>Mouse</b> para mirar</p>
             <hr class="border-light">
-            <p class="mb-1">🖱️ <b>Click aquí</b> para entrar</p>
-            <p class="mb-1">⌨️ <b>W, A, S, D</b> para caminar</p>
-            <p class="mb-0">🖱️ <b>Mouse</b> para mirar</p>
-            <p class="mt-2 mb-0 text-warning text-center" style="font-size: 0.8rem;">(Presiona ESC para salir)</p>
+            <p class="mb-1 text-warning text-center"><b>(Presiona ESC para salir)</b></p>
         </div>
 
+        <div id="click-prompter" class="text-center mt-3 p-2 bg-info rounded" style="cursor: pointer;">
+             🖱️ <b>Click aquí</b> para entrar
+        </div>
     </div>
+
+</div>
     
     <link rel="icon" href="data:,">
 
