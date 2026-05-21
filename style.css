@@ -1,14 +1,24 @@
-body{
-    margin:0;
-    overflow:hidden;
-    background:#000;
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    
+    /* Convertimos el body en una columna flexible */
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
-#contenedor3D{
-    width:100%;
-    height:90vh;
+#contenedor3D {
+    width: 100%;
+    /* flex-grow: 1 hace que el contenedor tome todo el espacio 
+       que sobra entre el navbar y el footer automáticamente */
+    flex-grow: 1; 
 }
 
-footer{
-    height:10vh;
+footer {
+    height: 10vh; /* Conservamos la altura que querías para el footer */
+    display: flex;
+    align-items: center; /* Centra el texto verticalmente */
+    justify-content: center; /* Centra el texto horizontalmente */
 }
