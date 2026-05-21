@@ -1,24 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
 body {
     margin: 0;
     overflow: hidden;
-    background: #000;
+    background: #000; /* Fondo por si acaso, aunque Three.js pone el cielo */
     
-    /* Convertimos el body en una columna flexible */
+    /* Flexbox para estructurar la página */
     display: flex;
     flex-direction: column;
     height: 100vh;
+    font-family: 'Poppins', sans-serif;
 }
 
 #contenedor3D {
     width: 100%;
-    /* flex-grow: 1 hace que el contenedor tome todo el espacio 
-       que sobra entre el navbar y el footer automáticamente */
     flex-grow: 1; 
+    position: relative;
 }
 
-footer {
-    height: 10vh; /* Conservamos la altura que querías para el footer */
+/* --- DISEÑO DEL NAVBAR --- */
+.navbar-custom {
+    background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    border-bottom: 2px solid #0dcaf0;
+    z-index: 10;
+}
+
+/* --- DISEÑO DEL FOOTER --- */
+.footer-custom {
+    background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+    border-top: 2px solid #0dcaf0;
+    height: 8vh; 
     display: flex;
-    align-items: center; /* Centra el texto verticalmente */
-    justify-content: center; /* Centra el texto horizontalmente */
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+    z-index: 10;
+}
+
+/* --- SOLUCIÓN PARA EL BOTÓN DE VR --- */
+#VRButton {
+    /* Lo subimos para que quede flotando sobre el modelo, no en el footer */
+    bottom: 10vh !important; 
+    
+    /* Le damos estilo para que combine con tu nuevo diseño */
+    background: rgba(30, 60, 114, 0.8) !important;
+    border: 1px solid #0dcaf0 !important;
+    border-radius: 8px !important;
+    font-family: 'Poppins', sans-serif !important;
+    transition: all 0.3s ease;
+}
+
+#VRButton:hover {
+    background: rgba(42, 82, 152, 1) !important;
 }
