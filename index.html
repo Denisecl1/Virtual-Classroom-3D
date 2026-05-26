@@ -23,21 +23,15 @@
         </div>
     </nav>
 
-    <div id="contenedor3D" class="position-relative">
+    <div id="contenedor3D">
         
-        <div id="instrucciones" class="position-absolute top-0 start-0 m-3 p-3 bg-dark text-white rounded shadow" style="z-index: 10; width: 260px; pointer-events: auto; background-color: rgba(33, 37, 41, 0.85) !important;">
-            <h5 class="text-center text-info mb-3 fw-bold">Controles del Aula</h5>
-            
-            <div id="controles-fijos">
-                <p class="mb-2"><span class="me-2 fs-5">⌨️</span> <b>W, A, S, D</b> para caminar</p>
-                <p class="mb-2"><span class="me-2 fs-5">🖱️</span> <b>Mouse</b> para mirar</p>
-                <hr class="border-light opacity-50">
-                <p class="mb-1 text-warning text-center small"><b>(Presiona ESC para salir)</b></p>
-            </div>
-
-            <div id="click-prompter" class="text-center mt-3 p-2 bg-info text-dark rounded fw-bold shadow-sm" style="cursor: pointer; transition: 0.3s;">
-                 🖱️ Click aquí para entrar
-            </div>
+        <div id="instructions">
+            <h5>Cómo Moverse</h5>
+            <p>⌨️ PC: <b>WASD</b> caminar</p>
+            <p>🖱️ PC: <b>Mouse</b> ver (Click para entrar)</p>
+            <hr class="border-light opacity-50">
+            <p>🕶️ VR Box: <b>Mirar al suelo</b> caminar</p>
+            <p class="small-hint">(Presiona ESC para salir de PC)</p>
         </div>
 
     </div>
@@ -62,4 +56,5 @@
     <script type="module" src="script.js"></script>
 
 </body>
+
 </html>
