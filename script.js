@@ -6,7 +6,7 @@ import { VRButton } from 'three/addons/webxr/VRButton.js';
 // --- CONFIGURACIÓN PRINCIPAL ---
 const contenedor = document.getElementById("contenedor3D");
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x202020);
+scene.background = new THREE.Color(0x202020); // Puedes cambiarlo a tu color de cielo si gustas
 
 // --- CAMARA Y EL CARRITO (DOLLY) PARA VR ---
 const camera = new THREE.PerspectiveCamera(75, contenedor.clientWidth / contenedor.clientHeight, 0.1, 1000);
@@ -15,15 +15,14 @@ const dolly = new THREE.Group();
 scene.add(dolly);
 dolly.add(camera);
 
-// 1. POSICIÓN INICIAL DE PRUEBA: Afuera y arriba del salón
-// Cuando encuentres tus coordenadas ideales en la consola, cámbialas aquí
-dolly.position.set(0, 5, 15); 
+// 1. SOLUCIÓN A LA POSICIÓN EN PC
+dolly.position.set(0, 1.6, 0);
 
 // --- RENDERIZADOR ---
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(contenedor.clientWidth, contenedor.clientHeight);
-renderer.xr.enabled = true; 
-renderer.shadowMap.enabled = true; 
+renderer.xr.enabled = true;
+renderer.shadowMap.enabled = true;
 contenedor.appendChild(renderer.domElement);
 
 // --- BOTÓN VR ---
@@ -36,7 +35,7 @@ scene.add(hemiLight);
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
 dirLight.position.set(5, 10, 7);
-dirLight.castShadow = true; 
+dirLight.castShadow = true;
 scene.add(dirLight);
 
 // --- CARGAR MODELO ---
@@ -101,15 +100,6 @@ controls.addEventListener('unlock', () => {
     if (instructionsBox) instructionsBox.style.display = 'block';
 });
 
-// --- TRUCO PARA ENCONTRAR COORDENADAS ---
-// Al hacer click, imprimirá la posición exacta en la consola
-document.addEventListener('mousedown', () => {
-    if (controls.isLocked) {
-        console.log(`%cTus coordenadas ideales son: X: ${dolly.position.x.toFixed(2)}, Y: ${dolly.position.y.toFixed(2)}, Z: ${dolly.position.z.toFixed(2)}`, 'color: #0dcaf0; font-size: 14px; font-weight: bold;');
-    }
-});
-// -----------------------------------------
-
 // Variables para el movimiento en VR
 const directionVR = new THREE.Vector3();
 const rightVR = new THREE.Vector3();
@@ -121,6 +111,19 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(contenedor.clientWidth, contenedor.clientHeight);
 });
+
+// --- NUEVA LÓGICA: CORRECCIÓN DE ALTURA SOLO PARA VR ---
+renderer.xr.addEventListener('sessionstart', function () {
+    // Al entrar al modo VR (celular), bajamos la altura base a 0
+    // porque el visor WebXR automáticamente sumará tu altura física real.
+    dolly.position.y = 0;
+});
+
+renderer.xr.addEventListener('sessionend', function () {
+    // Al salir del modo VR (regresar a PC), restauramos la altura manual.
+    dolly.position.y = 1.6;
+});
+// --------------------------------------------------------
 
 // --- BUCLE DE ANIMACIÓN PRINCIPAL ---
 renderer.setAnimationLoop(() => {
@@ -134,7 +137,7 @@ renderer.setAnimationLoop(() => {
 
         directionPC.z = Number(moveForwardPC) - Number(moveBackwardPC);
         directionPC.x = Number(moveRightPC) - Number(moveLeftPC);
-        directionPC.normalize(); 
+        directionPC.normalize();
 
         if (moveForwardPC || moveBackwardPC) velocityPC.z -= directionPC.z * 40.0 * delta;
         if (moveLeftPC || moveRightPC) velocityPC.x -= directionPC.x * 40.0 * delta;
@@ -146,28 +149,35 @@ renderer.setAnimationLoop(() => {
     // -- 2. LÓGICA VR CON CONTROL BLUETOOTH --
     if (renderer.xr.isPresenting) {
         let gamepadMoved = false;
-        
+
+        // Obtenemos hacia dónde apunta tu cabeza
         camera.getWorldDirection(directionVR);
-        directionVR.y = 0; 
+        directionVR.y = 0; // Mantener el movimiento plano sobre el piso
         directionVR.normalize();
-        
+
+        // Calculamos el vector lateral (para dar pasos de lado si el joystick lo permite)
         rightVR.crossVectors(upVector, directionVR).normalize();
 
+        // Detectar Control Bluetooth (Gamepad API)
         const gamepads = navigator.getGamepads();
         for (let i = 0; i < gamepads.length; i++) {
             const gp = gamepads[i];
             if (gp) {
-                const axisY = gp.axes[1] || 0; 
+                // Ejes del joystick (Normalmente axis 1 es arriba/abajo, axis 0 es izquierda/derecha)
+                const axisY = gp.axes[1] || 0;
                 const axisX = gp.axes[0] || 0;
 
+                // Zona muerta (para que no camine solo si el joystick está un poquito flojo)
                 if (Math.abs(axisY) > 0.1 || Math.abs(axisX) > 0.1) {
                     gamepadMoved = true;
+                    // Velocidad de caminata en VR (Ajusta el 3.0 si quieres ir más rápido o lento)
                     dolly.position.addScaledVector(directionVR, -axisY * 3.0 * delta);
                     dolly.position.addScaledVector(rightVR, axisX * 3.0 * delta);
                 }
             }
         }
 
+        // Respaldo: Algunos controles de VR Box en modo "@" o "Key" mandan señales de teclado en lugar de joystick
         if (!gamepadMoved) {
             if (moveForwardPC) dolly.position.addScaledVector(directionVR, 3.0 * delta);
             if (moveBackwardPC) dolly.position.addScaledVector(directionVR, -3.0 * delta);
