@@ -6,41 +6,45 @@ import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/js
 const contenedor = document.getElementById("contenedor3D");
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87CEEB);
+scene.background = new THREE.Color(0x87CEEB); // Cielo azul claro
 
 // --- CAMARA Y EL CARRITO (DOLLY) PARA VR ---
 const camera = new THREE.PerspectiveCamera(75, contenedor.clientWidth / contenedor.clientHeight, 0.1, 1000);
 
-// Creamos un "carrito" que transportará la cámara
 const dolly = new THREE.Group();
-dolly.position.set(0, 2, 8); // Posición inicial en el salón
+// Posición inicial segura dentro del salón (puedes ajustar el '2' para estar más cerca/lejos)
+dolly.position.set(0, 1.6, 5); 
 scene.add(dolly);
 
-// Metemos la cámara al carrito (posición 0,0,0 relativa al carrito)
 dolly.add(camera);
 camera.position.set(0, 0, 0); 
+camera.lookAt(0, 1.6, 0); // Mirar hacia adelante a la altura de los ojos
 // ------------------------------------------
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(contenedor.clientWidth, contenedor.clientHeight);
-renderer.xr.enabled = true; 
+renderer.xr.enabled = true; // Activar WebXR
 renderer.shadowMap.enabled = true; 
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 contenedor.appendChild(renderer.domElement);
 
-document.body.appendChild(VRButton.createButton(renderer));
+// Botón VR flotante sobre el footer
+const vrButton = VRButton.createButton(renderer);
+vrButton.style.position = 'absolute';
+vrButton.style.bottom = '10vh';
+vrButton.style.zIndex = '1000';
+document.body.appendChild(vrButton);
 
 // --- CONTROLES PC (W,A,S,D) ---
-// Ahora los controles mueven el carrito, no solo la cámara
 const controls = new PointerLockControls(camera, document.body);
 
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
+let moveForwardPC = false;
+let moveBackwardPC = false;
+let moveLeftPC = false;
+let moveRightPC = false;
 let prevTime = performance.now();
 const velocity = new THREE.Vector3();
 const direction = new THREE.Vector3();
-const directionVR = new THREE.Vector3(); // Vector para el movimiento con lentes
 
 const instrucciones = document.getElementById('instrucciones');
 const clickPrompter = document.getElementById('click-prompter');
@@ -59,19 +63,19 @@ if (instrucciones && clickPrompter) {
 
 const onKeyDown = function (event) {
     switch (event.code) {
-        case 'ArrowUp': case 'KeyW': moveForward = true; break;
-        case 'ArrowLeft': case 'KeyA': moveLeft = true; break;
-        case 'ArrowDown': case 'KeyS': moveBackward = true; break;
-        case 'ArrowRight': case 'KeyD': moveRight = true; break;
+        case 'ArrowUp': case 'KeyW': moveForwardPC = true; break;
+        case 'ArrowLeft': case 'KeyA': moveLeftPC =PC; break; // Corregido moveLeftPC
+        case 'ArrowDown': case 'KeyS': moveBackwardPC = true; break;
+        case 'ArrowRight': case 'KeyD': moveRightPC = true; break;
     }
 };
 
 const onKeyUp = function (event) {
     switch (event.code) {
-        case 'ArrowUp': case 'KeyW': moveForward = false; break;
-        case 'ArrowLeft': case 'KeyA': moveLeft = false; break;
-        case 'ArrowDown': case 'KeyS': moveBackward = false; break;
-        case 'ArrowRight': case 'KeyD': moveRight = false; break;
+        case 'ArrowUp': case 'KeyW': moveForwardPC = false; break;
+        case 'ArrowLeft': case 'KeyA': moveLeftPC = false; break;
+        case 'ArrowDown': case 'KeyS': moveBackwardPC = false; break;
+        case 'ArrowRight': case 'KeyD': moveRightPC = false; break;
     }
 };
 
@@ -83,14 +87,12 @@ const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
 hemiLight.position.set(0, 20, 0);
 scene.add(hemiLight);
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+const dirLight = new THREE.DirectionalLight(0xffffff, 1);
 dirLight.position.set(-5, 10, 5);
-dirLight.castShadow = true; 
-dirLight.shadow.mapSize.width = 2048;
-dirLight.shadow.mapSize.height = 2048;
 scene.add(dirLight);
 
-const grid = new THREE.GridHelper(20, 20);
+// Grid de referencia grande
+const grid = new THREE.GridHelper(50, 50, 0x444444, 0x888888); 
 scene.add(grid);
 
 // --- CARGAR MODELO ---
@@ -99,6 +101,7 @@ loader.load(
     'modelo.glb',
     function(gltf){
         const modelo = gltf.scene;
+        // Mantenemos tu escala actual
         modelo.scale.set(.90, .90, .90);
         modelo.position.set(0, 0, 0);
 
@@ -109,6 +112,7 @@ loader.load(
             }
         });
         scene.add(modelo);
+        console.log("Modelo de SketchUp cargado.");
     },
     undefined,
     function(error){ console.error(error); }
@@ -120,39 +124,62 @@ window.addEventListener('resize', () => {
     renderer.setSize(contenedor.clientWidth, contenedor.clientHeight);
 });
 
-// --- ANIMACION Y LÓGICA DE CAMINADO ---
+// --- LÓGICA VR DE MOVIMIENTO POR CLICK (SEGURO) ---
+let isClickingVR = false;
+const directionVR = new THREE.Vector3();
+
+// Escuchar eventos de click en el renderizador (pantalla del celular)
+renderer.domElement.addEventListener('touchstart', function() {
+    isClickingVR = true;
+});
+renderer.domElement.addEventListener('touchend', function() {
+    isClickingVR = false;
+});
+// También escuchamos eventos de mouse por si acaso (visores con control)
+renderer.domElement.addEventListener('mousedown', function() {
+    if (renderer.xr.isPresenting) isClickingVR = true;
+});
+renderer.domElement.addEventListener('mouseup', function() {
+    if (renderer.xr.isPresenting) isClickingVR = false;
+});
+// ----------------------------------------------------
+
+// --- ANIMACION ---
 renderer.setAnimationLoop(function () {
     const time = performance.now();
     const delta = (time - prevTime) / 1000;
 
-    // 1. SI ESTAMOS EN LA PC (Usando W, A, S, D)
+    // 1. SI ESTAMOS EN LA PC (controls.isLocked es true)
     if (controls.isLocked === true) {
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
 
-        direction.z = Number(moveForward) - Number(moveBackward);
-        direction.x = Number(moveRight) - Number(moveLeft);
+        direction.z = Number(moveForwardPC) - Number(moveBackwardPC);
+        direction.x = Number(moveRightPC) - Number(moveLeftPC);
         direction.normalize(); 
 
-        if (moveForward || moveBackward) velocity.z -= direction.z * 40.0 * delta;
-        if (moveLeft || moveRight) velocity.x -= direction.x * 40.0 * delta;
+        if (moveForwardPC || moveBackwardPC) velocity.z -= direction.z * 40.0 * delta;
+        if (moveLeftPC || moveRightPC) velocity.x -= direction.x * 40.0 * delta;
 
-        // Movemos el carrito, no la cámara directamente
+        // Movemos el dolly, no la cámara
         controls.moveRight(-velocity.x * delta);
         controls.moveForward(-velocity.z * delta);
     }
 
-    // 2. SI ESTAMOS EN EL CELULAR CON LOS LENTES VR
+    // 2. LÓGICA VR: Rotación y Caminado SEGURO (Solo con click)
+    // Three.js maneja la rotación por giroscopio automáticamente (si hay HTTPS).
+    
     if (renderer.xr.isPresenting) {
-        // Obtenemos hacia dónde está mirando tu cabeza
-        camera.getWorldDirection(directionVR);
-
-        // Si miras hacia el piso (inclinación negativa en Y)
-        if (directionVR.y < -0.2) {
-            directionVR.y = 0; // Evita que vueles o te entierres en el piso
+        // SI MANTENEMOS EL CLICK PRESIONADO
+        if (isClickingVR) {
+            // Obtenemos hacia dónde mira tu cabeza
+            camera.getWorldDirection(directionVR);
+            
+            // Movemos hacia adelante en ese plano horizontal
+            directionVR.y = 0; 
             directionVR.normalize();
             
-            // Mueve el carrito hacia adelante en la dirección que miras
+            // Caminamos hacia adelante (Velocidad 3.0)
             dolly.position.addScaledVector(directionVR, 3.0 * delta); 
         }
     }
@@ -161,26 +188,13 @@ renderer.setAnimationLoop(function () {
     renderer.render(scene, camera);
 });
 
-// --- LÓGICA PARA OCULTAR/MOSTRAR INTERFAZ EN VR ---
+// --- LÓGICA ADAPTATIVA PARA VR ---
 renderer.xr.addEventListener('sessionstart', function () {
-    // Cuando ENTRAS a Realidad Virtual: Ocultamos todo
-    document.querySelector('.navbar-custom').style.display = 'none';
-    document.querySelector('.footer-custom').style.display = 'none';
-    
     const recuadro = document.getElementById('instrucciones');
     if (recuadro) recuadro.style.display = 'none';
-    
-    console.log("Modo VR Iniciado: Interfaz oculta");
 });
 
 renderer.xr.addEventListener('sessionend', function () {
-    // Cuando SALES de Realidad Virtual: Mostramos todo de nuevo
-    document.querySelector('.navbar-custom').style.display = 'flex'; // flex para centrar el texto
-    document.querySelector('.footer-custom').style.display = 'flex';
-    
     const recuadro = document.getElementById('instrucciones');
     if (recuadro) recuadro.style.display = 'block';
-    
-    console.log("Modo VR Terminado: Interfaz restaurada");
 });
-// --------------------------------------------------
