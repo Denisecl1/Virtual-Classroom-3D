@@ -153,7 +153,6 @@ renderer.setAnimationLoop(function () {
             directionVR.normalize();
             
             // Mueve el carrito hacia adelante en la dirección que miras
-            // Puedes cambiar el "3.0" para caminar más rápido o más lento
             dolly.position.addScaledVector(directionVR, 3.0 * delta); 
         }
     }
@@ -161,3 +160,27 @@ renderer.setAnimationLoop(function () {
     prevTime = time;
     renderer.render(scene, camera);
 });
+
+// --- LÓGICA PARA OCULTAR/MOSTRAR INTERFAZ EN VR ---
+renderer.xr.addEventListener('sessionstart', function () {
+    // Cuando ENTRAS a Realidad Virtual: Ocultamos todo
+    document.querySelector('.navbar-custom').style.display = 'none';
+    document.querySelector('.footer-custom').style.display = 'none';
+    
+    const recuadro = document.getElementById('instrucciones');
+    if (recuadro) recuadro.style.display = 'none';
+    
+    console.log("Modo VR Iniciado: Interfaz oculta");
+});
+
+renderer.xr.addEventListener('sessionend', function () {
+    // Cuando SALES de Realidad Virtual: Mostramos todo de nuevo
+    document.querySelector('.navbar-custom').style.display = 'flex'; // flex para centrar el texto
+    document.querySelector('.footer-custom').style.display = 'flex';
+    
+    const recuadro = document.getElementById('instrucciones');
+    if (recuadro) recuadro.style.display = 'block';
+    
+    console.log("Modo VR Terminado: Interfaz restaurada");
+});
+// --------------------------------------------------

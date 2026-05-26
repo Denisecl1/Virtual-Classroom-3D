@@ -1,11 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+/* Importar tipografía moderna de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 body {
     margin: 0;
+    padding: 0;
     overflow: hidden;
-    background: #000; /* Fondo por si acaso, aunque Three.js pone el cielo */
+    background: #87CEEB; /* Mismo color del cielo por si acaso */
     
-    /* Flexbox para estructurar la página */
+    /* Flexbox para estructurar la página en 3 filas (Nav, Contenedor, Footer) */
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -14,8 +16,9 @@ body {
 
 #contenedor3D {
     width: 100%;
-    flex-grow: 1; 
+    flex-grow: 1; /* Esto hace que el canvas tome todo el espacio sobrante */
     position: relative;
+    display: block;
 }
 
 /* --- DISEÑO DEL NAVBAR --- */
@@ -30,7 +33,7 @@ body {
 .footer-custom {
     background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
     border-top: 2px solid #0dcaf0;
-    height: 8vh; 
+    height: 8vh; /* 8% del tamaño de la pantalla */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -39,19 +42,28 @@ body {
     z-index: 10;
 }
 
-/* --- SOLUCIÓN PARA EL BOTÓN DE VR --- */
+/* Efecto hover para el botón de click del recuadro */
+#click-prompter:hover {
+    background-color: #0bacce !important; /* Un tono más oscuro de info */
+    color: white !important;
+}
+
+/* --- SOLUCIÓN Y ESTILO PARA EL BOTÓN DE VR DE THREE.JS --- */
 #VRButton {
-    /* Lo subimos para que quede flotando sobre el modelo, no en el footer */
+    /* Lo subimos para que quede flotando sobre el modelo y no pise el footer */
     bottom: 10vh !important; 
     
-    /* Le damos estilo para que combine con tu nuevo diseño */
+    /* Le damos estilo para que combine con el Navbar y Footer */
     background: rgba(30, 60, 114, 0.8) !important;
     border: 1px solid #0dcaf0 !important;
     border-radius: 8px !important;
     font-family: 'Poppins', sans-serif !important;
+    font-weight: 600 !important;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
 }
 
 #VRButton:hover {
     background: rgba(42, 82, 152, 1) !important;
+    transform: scale(1.05);
 }
