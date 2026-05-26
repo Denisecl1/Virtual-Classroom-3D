@@ -17,9 +17,9 @@ dolly.add(camera);
 
 // 1. SOLUCIÓN A LA POSICIÓN: Aquí decides dónde apareces al iniciar.
 // X (izquierda/derecha), Y (altura), Z (adelante/atrás). 
-// Lo cambié a 0, 1.6, 0 para que aparezcas en el centro del modelo.
-// Si sigues apareciendo mal, cambia estos números hasta quedar donde tomaste la foto.
-dolly.position.set(0, 1.6, 0); 
+// ¡CLAVE PARA VR!: Ponemos la altura (Y) en 0. Así el visor usa tu altura física real en el suelo.
+// Puse "3" y "3" para sacarte de la pared. Si sigues en una butaca o pared, cambia estos "3" por otros números (ej. -2, 5, etc.) hasta que caigas en el pasillo.
+dolly.position.set(3, 0, 3); 
 
 // --- RENDERIZADOR ---
 const renderer = new THREE.WebGLRenderer({ antialias: true });
